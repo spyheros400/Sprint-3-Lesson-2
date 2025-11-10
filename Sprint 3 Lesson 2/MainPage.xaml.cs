@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Graphics;
-using Microsoft.Maui.Input;
+using Microsoft.Maui.Layouts;
 
 namespace Sprint_3_Lesson_2;
 
 public partial class MainPage : ContentPage
 {
     private readonly List<PlatformInfo> _platforms = new();
-    private readonly DispatcherTimer _timer;
+    private readonly IDispatcherTimer _timer;
 
     private bool _initialized;
     private bool _gameRunning;
@@ -26,10 +26,8 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
 
-        _timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(16)
-        };
+        _timer = Dispatcher.CreateTimer();
+        _timer.Interval = TimeSpan.FromMilliseconds(16);
         _timer.Tick += OnGameTick;
 
         GameArea.SizeChanged += OnGameAreaSizeChanged;
@@ -121,11 +119,6 @@ public partial class MainPage : ContentPage
     private void OnGameAreaPointerPressed(object? sender, PointerEventArgs e)
     {
         if (!_gameRunning || _gameOver)
-        {
-            return;
-        }
-
-        if (!e.Buttons.HasFlag(PointerButton.Primary))
         {
             return;
         }
