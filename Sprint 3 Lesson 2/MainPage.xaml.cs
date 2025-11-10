@@ -3,33 +3,37 @@ using System.Collections.Generic;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Graphics;
-using Microsoft.Maui.Input;
+using Microsoft.Maui.Layouts;
 
 namespace Sprint_3_Lesson_2;
 
 public partial class MainPage : ContentPage
 {
     private readonly List<PlatformInfo> _platforms = new();
-    private readonly DispatcherTimer _timer;
+    private readonly IDispatcherTimer _timer;
 
     private bool _initialized;
     private bool _gameRunning;
     private bool _gameOver;
+    private bool _moveLeft;
+    private bool _moveRight;
     private double _playerX;
     private double _playerY;
     private double _playerVelocityY;
 
     private const double Gravity = 0.7;
     private const double JumpVelocity = -12;
+    private const double HorizontalSpeed = 5;
 
     public MainPage()
     {
         InitializeComponent();
 
-        _timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(16)
-        };
+        Loaded += OnPageLoaded;
+        Unloaded += OnPageUnloaded;
+
+        _timer = Dispatcher.CreateTimer();
+        _timer.Interval = TimeSpan.FromMilliseconds(16);
         _timer.Tick += OnGameTick;
 
         GameArea.SizeChanged += OnGameAreaSizeChanged;
@@ -60,6 +64,8 @@ public partial class MainPage : ContentPage
         _timer.Stop();
         _gameRunning = false;
         _gameOver = false;
+        _moveLeft = false;
+        _moveRight = false;
         _playerVelocityY = 0;
 
         var height = GameArea.Height;
@@ -108,6 +114,8 @@ public partial class MainPage : ContentPage
         _gameRunning = true;
         _gameOver = false;
         _playerVelocityY = 0;
+        _moveLeft = false;
+        _moveRight = false;
         StartButton.IsVisible = false;
         ResetButton.IsVisible = false;
         _timer.Start();
@@ -125,15 +133,107 @@ public partial class MainPage : ContentPage
             return;
         }
 
-        if (!e.Buttons.HasFlag(PointerButton.Primary))
-        {
-            return;
-        }
-
         if (IsPlayerGrounded())
         {
             _playerVelocityY = JumpVelocity;
         }
+    }
+
+    private void OnPageLoaded(object? sender, EventArgs e)
+    {
+        AttachKeyboardEvents();
+    }
+
+    private void OnPageUnloaded(object? sender, EventArgs e)
+    {
+        DetachKeyboardEvents();
+    }
+
+    private void AttachKeyboardEvents()
+    {
+        var window = this.GetParentWindow();
+        if (window is null)
+        {
+            return;
+        }
+
+        window.KeyDown -= OnWindowKeyDown;
+        window.KeyDown += OnWindowKeyDown;
+        window.KeyUp -= OnWindowKeyUp;
+        window.KeyUp += OnWindowKeyUp;
+    }
+
+    private void DetachKeyboardEvents()
+    {
+        var window = this.GetParentWindow();
+        if (window is null)
+        {
+            return;
+        }
+
+        window.KeyDown -= OnWindowKeyDown;
+        window.KeyUp -= OnWindowKeyUp;
+    }
+
+    private void OnWindowKeyDown(object? sender, KeyboardEventArgs e)
+    {
+        if (!_gameRunning || _gameOver)
+        {
+            return;
+        }
+
+        if (IsLeftKey(e.Key))
+        {
+            _moveLeft = true;
+            e.Handled = true;
+        }
+        else if (IsRightKey(e.Key))
+        {
+            _moveRight = true;
+            e.Handled = true;
+        }
+        else if (IsJumpKey(e.Key) && IsPlayerGrounded())
+        {
+            _playerVelocityY = JumpVelocity;
+            e.Handled = true;
+        }
+    }
+
+    private void OnWindowKeyUp(object? sender, KeyboardEventArgs e)
+    {
+        if (IsLeftKey(e.Key))
+        {
+            _moveLeft = false;
+            e.Handled = true;
+        }
+        else if (IsRightKey(e.Key))
+        {
+            _moveRight = false;
+            e.Handled = true;
+        }
+    }
+
+    private static bool IsLeftKey(string key)
+    {
+        return string.Equals(key, "Left", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "ArrowLeft", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "A", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsRightKey(string key)
+    {
+        return string.Equals(key, "Right", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "ArrowRight", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "D", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsJumpKey(string key)
+    {
+        return string.Equals(key, "Space", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "Spacebar", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "Up", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "ArrowUp", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(key, "W", StringComparison.OrdinalIgnoreCase);
     }
 
     private bool IsPlayerGrounded()
@@ -191,6 +291,28 @@ public partial class MainPage : ContentPage
 
     private void UpdatePlayer()
     {
+        double horizontalDelta = 0;
+        if (_moveLeft)
+        {
+            horizontalDelta -= HorizontalSpeed;
+        }
+
+        if (_moveRight)
+        {
+            horizontalDelta += HorizontalSpeed;
+        }
+
+        _playerX += horizontalDelta;
+
+        if (_playerX < 0)
+        {
+            _playerX = 0;
+        }
+        else if (_playerX + Player.WidthRequest > GameArea.Width)
+        {
+            _playerX = Math.Max(0, GameArea.Width - Player.WidthRequest);
+        }
+
         double previousY = _playerY;
         _playerVelocityY += Gravity;
         _playerY += _playerVelocityY;
@@ -212,6 +334,7 @@ public partial class MainPage : ContentPage
                         _playerVelocityY = 0;
                         landed = true;
                         _playerX += platform.Velocity;
+                        _playerX = Math.Clamp(_playerX, 0, Math.Max(0, GameArea.Width - Player.WidthRequest));
                         break;
                     }
                 }
@@ -255,6 +378,8 @@ public partial class MainPage : ContentPage
         _timer.Stop();
         ResetButton.IsVisible = true;
         StartButton.IsVisible = false;
+        _moveLeft = false;
+        _moveRight = false;
     }
 
     private sealed class PlatformInfo

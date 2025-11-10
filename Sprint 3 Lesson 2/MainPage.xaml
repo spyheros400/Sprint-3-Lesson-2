@@ -44,7 +44,7 @@
                     FontSize="18" />
         </StackLayout>
 
-        <Label Text="Click Start, then use the left mouse button to jump."
+        <Label Text="Click Start, then use the arrow keys or A/D to move and left mouse button or Space to jump."
                HorizontalOptions="Center"
                VerticalOptions="End"
                Margin="0,0,0,24"
