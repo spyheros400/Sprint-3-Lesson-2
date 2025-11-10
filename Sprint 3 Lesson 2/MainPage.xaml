@@ -1,6 +1,55 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Sprint_3_Lesson_2.MainPage">
+             x:Class="Sprint_3_Lesson_2.MainPage"
+             BackgroundColor="#0B2CFF">
+    <Grid>
+        <AbsoluteLayout x:Name="GameArea"
+                         BackgroundColor="Transparent"
+                         Margin="0">
+            <BoxView x:Name="Platform1"
+                     Color="White"
+                     WidthRequest="140"
+                     HeightRequest="20" />
+            <BoxView x:Name="Platform2"
+                     Color="White"
+                     WidthRequest="140"
+                     HeightRequest="20" />
+            <BoxView x:Name="Platform3"
+                     Color="White"
+                     WidthRequest="160"
+                     HeightRequest="20" />
+            <BoxView x:Name="Player"
+                     Color="Red"
+                     WidthRequest="36"
+                     HeightRequest="36" />
+            <AbsoluteLayout.GestureRecognizers>
+                <PointerGestureRecognizer PointerPressed="OnGameAreaPointerPressed" />
+            </AbsoluteLayout.GestureRecognizers>
+        </AbsoluteLayout>
 
+        <StackLayout HorizontalOptions="Center"
+                     VerticalOptions="Center"
+                     Spacing="16">
+            <Button x:Name="StartButton"
+                    Text="Start Game"
+                    Clicked="OnStartButtonClicked"
+                    Padding="20,10"
+                    FontSize="18" />
+            <Button x:Name="ResetButton"
+                    Text="Reset"
+                    IsVisible="False"
+                    Clicked="OnResetButtonClicked"
+                    Padding="20,10"
+                    FontSize="18" />
+        </StackLayout>
+
+        <Label Text="Click Start, then use the left mouse button to jump."
+               HorizontalOptions="Center"
+               VerticalOptions="End"
+               Margin="0,0,0,24"
+               TextColor="White"
+               FontAttributes="Bold"
+               FontSize="16" />
+    </Grid>
 </ContentPage>
